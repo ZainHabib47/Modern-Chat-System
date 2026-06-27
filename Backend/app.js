@@ -1,25 +1,22 @@
 import Homiee from "./models/homiee.js";
+import User from "./models/signup.js"
+import connection from "./models/databaseConnection.js"
 import mongoose from "mongoose";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv"
+import authRoutes from "./routes/authRoute.js"
 
 
 const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use("/api/auth",authRoutes)
 
 dotenv.config();
+connection();
 
-const connector = async () => {
-  const connection = await mongoose.connect(
-    process.env.MONGODB_URL,
-  );
-  console.log("Connection Successfull to the Database");
-};
-
-connector();
 
 app.post("/api/messages", async (req, res) => {
   try {
@@ -39,7 +36,6 @@ app.post("/api/messages", async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
 
 app.get("/api/showAllMessages",async (req,res)=>{
   try{

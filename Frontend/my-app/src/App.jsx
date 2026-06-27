@@ -28,9 +28,12 @@ const App = () => {
     setAllMessages(data.data);
   };
 
-  useEffect(() => {
-    showAllMessages();
-  }, []);
+  showAllMessages();
+
+  setMsg("");
+  setSender("");
+  setReciver("");
+
 
   return (
     <>
