@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const signUpSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
@@ -8,25 +8,28 @@ const signUpSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
     },
+
     password: {
       type: String,
       required: true,
     },
+
     phoneNumber: {
       type: String,
-      unique: true,
       required: true,
+      unique: true,
     },
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-export default mongoose.model("User", signUpSchema);
+export default mongoose.model("User", userSchema);

@@ -1,5 +1,6 @@
 // controller/authController.js
 import User from "../models/signup.js";
+import generatePhoneNumber from "../utils/generatePhoneNumber.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -7,8 +8,7 @@ export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email }); // use findOne, not find
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -17,14 +17,26 @@ export const register = async (req, res) => {
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
+    let phoneNumber;
+    let exists = true;
+
+    while (exists) {
+      phoneNumber = generatePhoneNumber();
+
+      const user = await User.findOne({ phoneNumber });
+
+      if (!user) {
+        exists = false;
+      }
+    }
+
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
+      phoneNumber,
     });
 
     res.status(201).json({
@@ -82,6 +94,22 @@ export const login = async (req, res) => {
     res.status(200).json({
       success: true,
       token,
+      user,
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+export const getCurrentUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password");
+
+    res.status(200).json({
+      success: true,
       user,
     });
   } catch (err) {
