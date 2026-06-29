@@ -3,10 +3,34 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const App = () => {
-
   const navigate = useNavigate();
 
   const [user, setUser] = useState(null);
+  const [friends, setFriends] = useState([]);
+  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const getFriends = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:5000/api/friends/getFriend", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setFriends(data.friends);
+      } else {
+        console.log(data.message);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   useEffect(() => {
     const getUser = async () => {
@@ -26,7 +50,41 @@ const App = () => {
     };
 
     getUser();
+    getFriends();
   }, []);
+
+  const addFriend = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:5000/api/friends/addFriend", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          phoneNumber,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert(data.message);
+        return;
+      }
+
+      alert("Friend Added Successfully");
+
+      setPhoneNumber("");
+      setShowAddFriend(false);
+
+      getFriends(); // Refresh sidebar
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   const logoutUser = () => {
     localStorage.removeItem("token");
@@ -34,16 +92,6 @@ const App = () => {
 
     navigate("/");
   };
-
-  const showAllMessages = async () => {
-    const res = await fetch("http://localhost:5000/api/showAllMessages");
-    const data = await res.json();
-    setAllMessages(data.data);
-  };
-
-  useEffect(() => {
-    showAllMessages();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#4F46E5] via-[#7C3AED] to-[#2563EB] p-6">
@@ -75,14 +123,6 @@ const App = () => {
             <p className="text-cyan-300 mt-2">📱 {user?.phoneNumber}</p>
           </div>
 
-          {/* Add Friend */}
-
-          <div className="px-5">
-            <button className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 py-3 text-white font-semibold hover:scale-105 transition">
-              + Add Friend
-            </button>
-          </div>
-
           {/* Search */}
 
           <div className="p-5">
@@ -94,30 +134,43 @@ const App = () => {
 
           {/* Friend List */}
 
-          <div className="flex-1 overflow-y-auto px-4">
-            <div className="mb-3 rounded-xl bg-white/10 p-4 cursor-pointer hover:bg-white/20 transition">
-              <h2 className="text-white">🟢 Ali</h2>
-            </div>
+          {friends.length === 0 ? (
+            <p className="text-white/60 text-center mt-5">
+              No friends added yet.
+            </p>
+          ) : (
+            friends.map((item) => (
+              <div
+                key={item._id}
+                className="mb-3 rounded-xl bg-white/10 p-4 cursor-pointer hover:bg-white/20 transition"
+              >
+                <h2 className="text-white font-semibold">
+                  🟢 {item.friend.username}
+                </h2>
 
-            <div className="mb-3 rounded-xl bg-white/10 p-4 cursor-pointer hover:bg-white/20 transition">
-              <h2 className="text-white">⚪ Ahmad</h2>
-            </div>
-
-            <div className="mb-3 rounded-xl bg-white/10 p-4 cursor-pointer hover:bg-white/20 transition">
-              <h2 className="text-white">🟢 Bilal</h2>
-            </div>
-          </div>
+                <p className="text-cyan-300 text-sm">
+                  {item.friend.phoneNumber}
+                </p>
+              </div>
+            ))
+          )}
 
           {/* Logout */}
 
           <div className="p-5">
             <button
-              onClick={logoutUser}
-              className="w-full rounded-xl bg-red-500 py-3 text-white hover:bg-red-600 transition"
+              onClick={() => setShowAddFriend(true)}
+              className="w-full rounded-xl bg-gradient-to-r from-purple-700 to-blue-600 py-3 text-white font-semibold hover:scale-105 transition"
             >
-              Logout
+              + Add Friend
             </button>
           </div>
+          <button
+              onClick={logoutUser}
+              className="w-full rounded-xl bg-gradient-to-r from-purple-700 to-blue-600 py-3 text-white font-semibold hover:scale-90 transition"
+            >
+              Log Out
+            </button>
         </div>
 
         {/* ================= CHAT ================= */}
@@ -153,9 +206,45 @@ const App = () => {
             <button className="rounded-full bg-gradient-to-r from-purple-600 to-blue-600 px-8 text-white font-semibold hover:scale-105 transition">
               Send
             </button>
+            
           </div>
+          
         </div>
       </div>
+
+      {showAddFriend && (
+        <div className="fixed inset-0 bg-black/60 flex justify-center items-center z-50">
+          <div className="w-[420px] rounded-3xl bg-[#1e1e2f] border border-white/10 p-8">
+            <h1 className="text-3xl font-bold text-white text-center mb-6">
+              Add Friend
+            </h1>
+
+            <input
+              type="text"
+              placeholder="Enter Phone Number"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className="w-full rounded-xl border border-white/20 bg-white/10 p-4 text-white outline-none placeholder:text-white/50"
+            />
+
+            <div className="flex gap-4 mt-8">
+              <button
+                onClick={() => setShowAddFriend(false)}
+                className="flex-1 rounded-xl bg-gray-600 py-3 text-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={addFriend}
+                className="flex-1 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 py-3 text-white"
+              >
+                Add Friend
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -6,16 +6,18 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv"
 import authRoutes from "./routes/authRoute.js"
+import friendRoutes from "./routes/friendRoutes.js"
 
 
 
 const app = express();
+dotenv.config();
 
 app.use(express.json());
 app.use(cors());
 app.use("/api/auth",authRoutes)
+app.use("/api/friends",friendRoutes)
 
-dotenv.config();
 connection();
 
 
